@@ -1,7 +1,7 @@
 /**
  * lib/ai/llm.ts
  * ──────────────
- * LLM Service Layer — Google Gemini (gemini-1.5-flash)
+ * LLM Service Layer — Groq API (llama-3.3-70b-versatile)
  *
  * Provides two cognitive enrichment functions:
  *
@@ -11,40 +11,39 @@
  *                                 collocation fit, and L1 (Turkish) negative transfer.
  *
  * Design decisions:
- *  - Lazy GoogleGenerativeAI singleton avoids module-level errors in environments where
- *    GEMINI_API_KEY is not set (e.g., CI, static build).
- *  - generationConfig: { responseMimeType: 'application/json' } guarantees valid JSON output;
+ *  - Lazy Groq singleton avoids module-level errors when GROQ_API_KEY is not set.
+ *  - response_format: { type: 'json_object' } guarantees valid JSON output;
  *    Zod provides runtime type safety on top of that.
- *  - All public functions return a discriminated-union result type (never throw)
- *    so callers can handle errors without try/catch.
+ *  - All public functions return a discriminated-union result type (never throw).
  *  - Graceful fallbacks prevent UI breakage when the API is unavailable.
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { z }                  from 'zod';
+import Groq  from 'groq-sdk';
+import { z } from 'zod';
 
 // =============================================================================
-// 1. CLIENT — lazy singleton
+// 1. CLIENT — lazy Groq singleton
 // =============================================================================
 
-let _genAI: GoogleGenerativeAI | null = null;
+let _groqClient: Groq | null = null;
 
-function getGenAI(): GoogleGenerativeAI {
-  const apiKey = process.env.GEMINI_API_KEY;
+function getGroqClient(): Groq {
+  const apiKey = process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY;
 
   if (!apiKey || !apiKey.trim()) {
+    console.warn("GROQ_API_KEY eksik veya boş! Lütfen .env.local dosyanızı kontrol edin.");
     throw new Error(
-      'GEMINI_API_KEY is not set.\n' +
+      'GROQ_API_KEY is not set.\n' +
       'Add it to .env.local:\n\n' +
-      '  GEMINI_API_KEY=AQ...\n',
+      '  GROQ_API_KEY=gsk_...\n',
     );
   }
 
-  if (!_genAI) {
-    _genAI = new GoogleGenerativeAI(apiKey.trim());
+  if (!_groqClient) {
+    _groqClient = new Groq({ apiKey: apiKey.trim() });
   }
 
-  return _genAI;
+  return _groqClient;
 }
 
 // =============================================================================
@@ -100,7 +99,7 @@ type ErrResult     = { ok: false; error: string };
 type CallResult<T> = OkResult<T> | ErrResult;
 
 /**
- * Calls Google Gemini (gemini-1.5-flash) in JSON mode and validates the response
+ * Calls Groq API (llama-3.3-70b-versatile) in JSON mode and validates the response
  * against a Zod schema.
  */
 async function callWithJsonMode<T>(
@@ -110,22 +109,22 @@ async function callWithJsonMode<T>(
   options?:          { temperature?: number; maxOutputTokens?: number },
 ): Promise<CallResult<T>> {
   try {
-    const genAI = getGenAI();
+    const groq = getGroqClient();
 
-    const model = genAI.getGenerativeModel({
-      model:             'gemini-2.0-flash',
-      systemInstruction: systemInstruction,
-      generationConfig: {
-        responseMimeType: 'application/json',
-        temperature:      options?.temperature     ?? 0.3,
-        maxOutputTokens:  options?.maxOutputTokens ?? 600,
-      },
+    const response = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        { role: 'system', content: systemInstruction },
+        { role: 'user', content: prompt },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: options?.temperature ?? 0.3,
+      max_tokens: options?.maxOutputTokens ?? 600,
     });
 
-    const result = await model.generateContent(prompt);
-    const raw    = result.response.text();
+    const raw = response.choices[0]?.message?.content;
 
-    if (!raw) throw new Error('Model returned an empty response.');
+    if (!raw) throw new Error('Groq model returned an empty response.');
 
     let parsed: unknown;
     try {
@@ -138,8 +137,8 @@ async function callWithJsonMode<T>(
     return { ok: true, data: validated };
 
   } catch (err) {
+    console.error("GROQ API HATASI:", err);
     const msg = err instanceof Error ? err.message : String(err);
-    console.error('[lib/ai/llm] Error:', msg);
     return { ok: false, error: msg };
   }
 }

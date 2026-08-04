@@ -168,16 +168,17 @@ export async function submitSentenceForFeedback(params: {
 
   // ── API Key presence check (fast-fail before input validation) ────────────
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY;
     if (!apiKey || !apiKey.trim()) {
       return {
         success: false,
         error:
-          'AI servisi yapılandırma hatası: GEMINI_API_KEY bulunamadı. ' +
+          'AI servisi yapılandırma hatası: GROQ_API_KEY bulunamadı. ' +
           'Lütfen .env.local dosyasındaki anahtarı güncelleyin.',
       };
     }
   } catch (e) {
+    console.error("GROQ API HATASI:", e);
     return {
       success: false,
       error: 'API anahtarı doğrulanırken bir hata oluştu.',
@@ -252,16 +253,17 @@ export async function generateContextSentenceAction(params: {
 
   // ── API Key presence check ────────────────────────────────────────────────
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY;
     if (!apiKey || !apiKey.trim()) {
       return {
         success: false,
         error:
-          'AI servisi yapılandırma hatası: GEMINI_API_KEY bulunamadı. ' +
+          'AI servisi yapılandırma hatası: GROQ_API_KEY bulunamadı. ' +
           'Lütfen .env.local dosyasındaki anahtarı güncelleyin.',
       };
     }
   } catch (e) {
+    console.error("GROQ API HATASI:", e);
     return {
       success: false,
       error: 'API anahtarı doğrulanırken bir hata oluştu.',
