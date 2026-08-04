@@ -32,7 +32,7 @@ let _genAI: GoogleGenerativeAI | null = null;
 function getGenAI(): GoogleGenerativeAI {
   const apiKey = process.env.GEMINI_API_KEY;
 
-  if (!apiKey) {
+  if (!apiKey || !apiKey.trim()) {
     throw new Error(
       'GEMINI_API_KEY is not set.\n' +
       'Add it to .env.local:\n\n' +
@@ -40,15 +40,8 @@ function getGenAI(): GoogleGenerativeAI {
     );
   }
 
-  if (!apiKey.startsWith('AIzaSy')) {
-    throw new Error(
-      'GEMINI_API_KEY geçersiz formatta ("AIzaSy" ile başlamalıdır). ' +
-      'Lütfen Google AI Studio üzerinden aldığınız anahtarı kontrol edin.',
-    );
-  }
-
   if (!_genAI) {
-    _genAI = new GoogleGenerativeAI(apiKey);
+    _genAI = new GoogleGenerativeAI(apiKey.trim());
   }
 
   return _genAI;

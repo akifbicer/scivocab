@@ -166,14 +166,14 @@ export async function submitSentenceForFeedback(params: {
     return { success: false, error: 'Oturum açmanız gerekmektedir.' };
   }
 
-  // ── API Key presence & format check (fast-fail before input validation) ───
+  // ── API Key presence check (fast-fail before input validation) ────────────
   try {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey || !apiKey.startsWith('AIzaSy')) {
+    if (!apiKey || !apiKey.trim()) {
       return {
         success: false,
         error:
-          'AI servisi yapılandırma hatası: GEMINI_API_KEY "AIzaSy" ile başlamalıdır. ' +
+          'AI servisi yapılandırma hatası: GEMINI_API_KEY bulunamadı. ' +
           'Lütfen .env.local dosyasındaki anahtarı güncelleyin.',
       };
     }
@@ -250,14 +250,14 @@ export async function generateContextSentenceAction(params: {
     return { success: false, error: 'Oturum açmanız gerekmektedir.' };
   }
 
-  // ── API Key presence & format check ───────────────────────────────────────
+  // ── API Key presence check ────────────────────────────────────────────────
   try {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey || !apiKey.startsWith('AIzaSy')) {
+    if (!apiKey || !apiKey.trim()) {
       return {
         success: false,
         error:
-          'AI servisi yapılandırma hatası: GEMINI_API_KEY "AIzaSy" ile başlamalıdır. ' +
+          'AI servisi yapılandırma hatası: GEMINI_API_KEY bulunamadı. ' +
           'Lütfen .env.local dosyasındaki anahtarı güncelleyin.',
       };
     }
