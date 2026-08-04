@@ -10,6 +10,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowRight,
@@ -19,6 +20,7 @@ import {
   Flame,
   Gauge,
   Layers,
+  LogOut,
   Settings,
   Sparkles,
   Target,
@@ -27,6 +29,8 @@ import {
   X,
   Zap,
 } from 'lucide-react';
+
+import { supabase } from '@/lib/supabaseClient';
 
 import type { DashboardData } from '../page';
 import { ModuleSelector } from '@/components/ModuleSelector';
@@ -76,6 +80,14 @@ function WelcomeSection({
   onOpenLimitModal,
   onOpenRoutinesModal,
 }: WelcomeSectionProps) {
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+    router.refresh();
+  };
+
   return (
     <motion.section variants={fadeUpVariant} className="mb-6">
       {/* Greeting row */}
@@ -126,6 +138,17 @@ function WelcomeSection({
           >
             <Zap size={14} className="text-emerald-400" />
             <span>🚀 Günlük Rutin</span>
+          </button>
+
+          {/* Sign Out Button */}
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="flex items-center gap-1.5 rounded-xl border border-rose-900/60 bg-rose-950/40 px-3.5 py-2 text-xs font-bold text-rose-300 hover:bg-rose-900/60 hover:text-white transition-all shadow-md cursor-pointer"
+            title="Oturumu Kapat"
+          >
+            <LogOut size={14} className="text-rose-400" />
+            <span>Çıkış Yap</span>
           </button>
 
           {/* Streak Freeze Badge */}
