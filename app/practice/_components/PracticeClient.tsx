@@ -44,6 +44,7 @@ interface PracticeClientProps {
   /** ISO-8601 timestamp of the next card due (for empty-state display). */
   nextDueAt:     string | null;
   currentModule?: number;
+  isGlobalMode?: boolean;
 }
 
 // =============================================================================
@@ -57,6 +58,7 @@ interface ProgressHeaderProps {
   remaining:       number;
   total:           number;
   progressPercent: number;
+  isGlobalMode?:   boolean;
 }
 
 function ProgressHeader({
@@ -64,16 +66,23 @@ function ProgressHeader({
   remaining,
   total,
   progressPercent,
+  isGlobalMode,
 }: ProgressHeaderProps) {
   return (
     <header className="sticky top-0 z-10 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md">
+      {isGlobalMode && (
+        <div className="bg-gradient-to-r from-blue-950 via-blue-900 to-zinc-900 border-b border-blue-800/50 py-1.5 px-4 text-center text-xs font-bold text-blue-200 flex items-center justify-center gap-2">
+          <Sparkles size={13} className="text-yellow-300 animate-pulse shrink-0" />
+          <span>Küresel Tekrar Modu (Global Review Engine) — Tüm modüllerdeki zamanı gelmiş kartlar</span>
+        </div>
+      )}
       <div className="mx-auto max-w-2xl px-4 py-3">
         {/* Label row */}
         <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Brain size={14} className="text-blue-500" />
             <span className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
-              Practice Session
+              {isGlobalMode ? 'Küresel Tekrar Seansı' : 'Practice Session'}
             </span>
           </div>
           <div className="flex items-center gap-3 text-xs text-zinc-500">
@@ -151,13 +160,13 @@ function SessionInfoBand({
   return (
     <footer className="border-t border-zinc-800/60 bg-zinc-950/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-2xl items-center justify-around px-4 py-3.5">
-        <StatPill icon={CheckCircle2} label="Done"     value={completedCount} colorClass="text-emerald-600" />
+        <StatPill icon={CheckCircle2} label="Done"     value={completedCount} colorClass="text-emerald-500" />
         <div className="h-6 w-px bg-zinc-800" />
-        <StatPill icon={RefreshCw}   label="Lapses"   value={lapseCount}     colorClass="text-amber-600"   />
+        <StatPill icon={RefreshCw}   label="Lapses"   value={lapseCount}     colorClass="text-amber-500"   />
         <div className="h-6 w-px bg-zinc-800" />
-        <StatPill icon={Timer}       label="Avg Time"  value={`${avgSec}s`}   colorClass="text-blue-600"    />
+        <StatPill icon={Timer}       label="Avg Time"  value={`${avgSec}s`}   colorClass="text-blue-500"    />
         <div className="h-6 w-px bg-zinc-800" />
-        <StatPill icon={Target}      label="Accuracy" value={accuracy}        colorClass="text-violet-600"  />
+        <StatPill icon={Target}      label="Accuracy" value={accuracy}        colorClass="text-sky-400"     />
       </div>
     </footer>
   );
@@ -206,11 +215,14 @@ function EmptyState({ nextDueAt }: EmptyStateProps) {
       </div>
 
       {/* Heading */}
-      <h1 className="mb-2 text-2xl font-extrabold tracking-tight text-white">
-        Tebrikler! Güncel Kart Kalmadı
+      <h1 className="mb-2 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+        Tebrikler! 🎉
       </h1>
-      <p className="mb-6 max-w-sm text-zinc-300 text-base leading-relaxed">
-        Tebrikler! Bu modüldeki tüm kartlar güncel. Tekrar zamanı geldiğinde tekrar burada görünecekler 🚀
+      <p className="mb-6 max-w-md text-emerald-300 text-lg font-semibold leading-relaxed">
+        Tüm modüllerdeki zamanı gelmiş tekrarlarını tamamladın! 🧠✨
+      </p>
+      <p className="mb-8 max-w-sm text-zinc-400 text-sm leading-relaxed">
+        Şu an tekrar etmen gereken hiçbir kart yok. Harika bir iş çıkardın! Tekrar zamanı geldiğinde kartlar otomatik olarak buraya düşecek.
       </p>
 
       {/* Next review chip */}
@@ -248,7 +260,7 @@ function EmptyState({ nextDueAt }: EmptyStateProps) {
             hover:border-zinc-700 hover:text-white transition-all duration-150
           "
         >
-          <span>Diğer Modüllere Göz At</span>
+          <span>Modüllere Göz At</span>
         </button>
       </div>
     </motion.div>
@@ -285,14 +297,15 @@ interface SessionCompleteProps {
   onBack:         () => void;
   onRepeat:       () => void;
   currentModule?: number;
+  isGlobalMode?:  boolean;
 }
 
-function SessionComplete({ summary, onBack, onRepeat, currentModule = 1 }: SessionCompleteProps) {
+function SessionComplete({ summary, onBack, onRepeat, currentModule = 1, isGlobalMode }: SessionCompleteProps) {
   const avgSec = (summary.averageLatencyMs / 1_000).toFixed(1);
   const nextModule = currentModule < 100 ? currentModule + 1 : 1;
 
   const handleStartNextSession = () => {
-    window.location.href = `/practice?module=${nextModule}`;
+    window.location.href = isGlobalMode ? '/practice?mode=global' : `/practice?module=${nextModule}`;
   };
 
   return (
@@ -300,7 +313,7 @@ function SessionComplete({ summary, onBack, onRepeat, currentModule = 1 }: Sessi
       initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
-      className="flex min-h-screen flex-col items-center justify-center px-6 py-12"
+      className="flex min-h-screen flex-col items-center justify-center px-6 py-12 text-center"
     >
       {/* Trophy + glow ring */}
       <div className="relative mb-8">
@@ -322,77 +335,55 @@ function SessionComplete({ summary, onBack, onRepeat, currentModule = 1 }: Sessi
       </div>
 
       {/* Heading */}
-      <h1 className="mb-1 text-3xl font-bold tracking-tight text-white">
-        Session Complete!
+      <h1 className="mb-2 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+        Seans Tamamlandı! 🎉
       </h1>
-      <p className="mb-8 text-zinc-500">
-        {summary.lapseCount > 0
-          ? `${summary.lapseCount} card${summary.lapseCount > 1 ? 's' : ''} needed extra practice.`
-          : 'Perfect session — no lapses!'}
+      <p className="mb-6 max-w-md text-emerald-300 text-lg font-semibold leading-relaxed">
+        Tüm modüllerdeki zamanı gelmiş tekrarlarını tamamladın! 🧠✨
+      </p>
+      <p className="mb-8 text-sm text-zinc-400">
+        Bu seansta toplam <span className="font-bold text-white">{summary.totalReviewed} kart</span> başarıyla tamamlandı.
       </p>
 
       {/* Stats grid */}
       <div className="mb-8 grid w-full max-w-md grid-cols-3 gap-3">
         <SummaryStat
           icon={BookOpen}
-          label="Reviewed"
+          label="Tamamlanan"
           value={String(summary.totalReviewed)}
-          sub="unique cards"
+          sub="kart"
           colorClass="text-blue-400"
         />
         <SummaryStat
           icon={Zap}
-          label="Avg Time"
+          label="Ort. Süre"
           value={`${avgSec}s`}
-          sub="recall latency"
+          sub="hatırlama hızı"
           colorClass="text-amber-400"
         />
         <SummaryStat
           icon={Target}
-          label="Accuracy"
-          value={`${summary.successRate}%`}
+          label="Başarı Oranı"
+          value={`%${summary.successRate}`}
           sub="Good + Easy"
           colorClass="text-emerald-400"
         />
       </div>
 
-      {/* Lapse badge (conditionally) */}
-      {summary.lapseCount > 0 && (
-        <div className="mb-8 flex items-center gap-2 rounded-lg border border-amber-900/50 bg-amber-950/20 px-4 py-2">
-          <RefreshCw size={13} className="text-amber-500" />
-          <span className="text-sm text-amber-400/80">
-            {summary.lapseCount} lapse{summary.lapseCount > 1 ? 's' : ''} this session
-          </span>
-        </div>
-      )}
-
       {/* Action buttons */}
       <div className="flex w-full max-w-xs flex-col gap-3">
-        <button
-          onClick={handleStartNextSession}
-          className="
-            flex items-center justify-center gap-2 rounded-xl
-            border border-blue-600 bg-blue-600 px-6 py-3
-            text-sm font-semibold text-white
-            hover:border-blue-500 hover:bg-blue-500 shadow-lg shadow-blue-950/40
-            transition-all duration-150 group
-          "
-        >
-          <RotateCcw size={14} className="transition-transform duration-200 group-hover:rotate-180" />
-          <span>Start Next Session (Module {nextModule})</span>
-        </button>
         <button
           onClick={onBack}
           className="
             flex items-center justify-center gap-2 rounded-xl
-            border border-zinc-700 bg-zinc-800 px-6 py-3
-            text-sm font-medium text-zinc-400
-            hover:border-zinc-600 hover:text-zinc-300
+            border border-blue-600 bg-blue-600 px-6 py-3.5
+            text-sm font-semibold text-white shadow-lg shadow-blue-950/40
+            hover:border-blue-500 hover:bg-blue-500
             transition-all duration-150
           "
         >
-          <ArrowLeft size={14} />
-          Back to Dashboard
+          <ArrowLeft size={16} />
+          <span>Dashboard'a Dön</span>
         </button>
       </div>
     </motion.div>
@@ -403,7 +394,7 @@ function SessionComplete({ summary, onBack, onRepeat, currentModule = 1 }: Sessi
 // MAIN CLIENT COMPONENT
 // =============================================================================
 
-export function PracticeClient({ initialCards, nextDueAt, currentModule = 1 }: PracticeClientProps) {
+export function PracticeClient({ initialCards, nextDueAt, currentModule = 1, isGlobalMode }: PracticeClientProps) {
   const router = useRouter();
   const [cardIndex, setCardIndex] = useState(0);
 
@@ -451,6 +442,7 @@ export function PracticeClient({ initialCards, nextDueAt, currentModule = 1 }: P
           onBack={() => router.push('/dashboard')}
           onRepeat={()  => router.refresh()}   // server re-fetch picks up new due cards
           currentModule={currentModule}
+          isGlobalMode={isGlobalMode}
         />
       </div>
     );
@@ -465,6 +457,7 @@ export function PracticeClient({ initialCards, nextDueAt, currentModule = 1 }: P
         remaining={queue.length}
         total={stats.totalStarted}
         progressPercent={progressPercent}
+        isGlobalMode={isGlobalMode}
       />
 
       {/* ── Card area ────────────────────────────────────────── */}

@@ -44,18 +44,18 @@ export function ReceptiveToProductiveWidget({ data, className = '' }: ReceptiveT
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
         <div>
           <div className="flex items-center gap-2">
-            <Target size={16} className="text-violet-400" />
+            <Target size={16} className="text-blue-400" />
             <span className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
-              Pasif / Aktif Dağarcık Dönüşüm Oranı (R-Act)
+              R-ACT Metrics
             </span>
           </div>
           <h3 className="text-lg font-bold text-white tracking-tight mt-0.5">
-            Receptive to Productive Ratio
+            Dağarcık Dengesi (R-ACT)
           </h3>
         </div>
 
         {/* Target Benchmark Badge */}
-        <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-bold ${isTargetMet ? 'bg-emerald-950/90 text-emerald-300 border-emerald-700' : 'bg-violet-950/90 text-violet-300 border-violet-700'}`}>
+        <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-bold ${isTargetMet ? 'bg-emerald-950/90 text-emerald-300 border-emerald-700' : 'bg-blue-950/90 text-blue-300 border-blue-700'}`}>
           <Sparkles size={12} />
           <span>Hedef: %{targetRatio} · {isTargetMet ? 'Hedef Ulaşıldı ✓' : 'Hedefe İlerliyor'}</span>
         </span>
@@ -79,7 +79,7 @@ export function ReceptiveToProductiveWidget({ data, className = '' }: ReceptiveT
               cx="64"
               cy="64"
               r={radius}
-              stroke={isTargetMet ? '#10b981' : '#8b5cf6'}
+              stroke={isTargetMet ? '#10b981' : '#3b82f6'}
               strokeWidth="10"
               strokeDasharray={circumference}
               initial={{ strokeDashoffset: circumference }}
@@ -91,7 +91,7 @@ export function ReceptiveToProductiveWidget({ data, className = '' }: ReceptiveT
           </svg>
 
           <div className="absolute flex flex-col items-center justify-center text-center">
-            <span className={`text-2xl font-extrabold tracking-tight tabular-nums ${isTargetMet ? 'text-emerald-400' : 'text-violet-400'}`}>
+            <span className={`text-2xl font-extrabold tracking-tight tabular-nums ${isTargetMet ? 'text-emerald-400' : 'text-blue-400'}`}>
               %{activationRatio}
             </span>
             <span className="text-[10px] font-semibold uppercase text-zinc-500 tracking-wider">
@@ -111,18 +111,18 @@ export function ReceptiveToProductiveWidget({ data, className = '' }: ReceptiveT
               <p className="text-lg font-bold text-white">
                 {receptiveCount.toLocaleString()} <span className="text-xs font-normal text-zinc-500">kelime</span>
               </p>
-              <p className="text-[10px] text-zinc-500 mt-0.5">Okuduğunu anlama dağarcığı</p>
+              <p className="text-[10px] text-zinc-500 mt-0.5">Anladığın kelimeler</p>
             </div>
 
             <div className="rounded-xl border border-zinc-800 bg-zinc-950/80 p-3">
               <div className="flex items-center gap-1.5 text-zinc-500 mb-1">
-                <Edit3 size={13} className="text-violet-400" />
+                <Edit3 size={13} className="text-sky-400" />
                 <span className="font-semibold uppercase text-[10px]">Aktif (Productive)</span>
               </div>
-              <p className="text-lg font-bold text-violet-300">
+              <p className="text-lg font-bold text-sky-300">
                 {productiveCount.toLocaleString()} <span className="text-xs font-normal text-zinc-500">kelime</span>
               </p>
-              <p className="text-[10px] text-zinc-500 mt-0.5">Yazıda aktif kullanılanlar</p>
+              <p className="text-[10px] text-zinc-500 mt-0.5">Kullanabildiğin kelimeler</p>
             </div>
           </div>
         </div>
@@ -138,10 +138,10 @@ export function ReceptiveToProductiveWidget({ data, className = '' }: ReceptiveT
           )}
           <div>
             <p className="text-xs font-bold uppercase tracking-wider mb-1">
-              {isTargetMet ? 'Metakognitif Değerlendirme (Optimal)' : 'Metakognitif İkaz & Tavsiye'}
+              💡 Öneri
             </p>
             <p className="text-xs leading-relaxed opacity-90">
-              {statusMessage}
+              Kelime tanıma oranınız yüksek. Cümle kurma pratikleriyle aktif dağarcığınızı artırın.
             </p>
           </div>
         </div>

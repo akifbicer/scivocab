@@ -35,7 +35,9 @@ export interface ReviewLogRow {
  */
 export function calculateStabilityMatrix(cards: CardStateRow[]): StabilityMatrixData {
   let learningCount = 0;
-  let reviewCount = 0;
+  let earlyReviewCount = 0;
+  let consolidationCount = 0;
+  let longTermCount = 0;
   let masteredCount = 0;
 
   // Filter for active studied cards (repetition_count > 0 or state !== 'New')
@@ -49,8 +51,12 @@ export function calculateStabilityMatrix(cards: CardStateRow[]): StabilityMatrix
     const s = c.stability ?? 0;
     if (c.state === 'Mastered' || s >= 365) {
       masteredCount++;
-    } else if (c.state === 'Review' || s >= 1.0) {
-      reviewCount++;
+    } else if (s >= 30) {
+      longTermCount++;
+    } else if (s >= 7) {
+      consolidationCount++;
+    } else if (s >= 1) {
+      earlyReviewCount++;
     } else {
       learningCount++;
     }
@@ -58,23 +64,20 @@ export function calculateStabilityMatrix(cards: CardStateRow[]): StabilityMatrix
 
   const totalCount = activeStudiedCards.length;
   const learningPercentage = totalCount > 0 ? Math.round((learningCount / totalCount) * 100) : 0;
-  const reviewPercentage = totalCount > 0 ? Math.round((reviewCount / totalCount) * 100) : 0;
+  const earlyReviewPercentage = totalCount > 0 ? Math.round((earlyReviewCount / totalCount) * 100) : 0;
+  const consolidationPercentage = totalCount > 0 ? Math.round((consolidationCount / totalCount) * 100) : 0;
+  const longTermPercentage = totalCount > 0 ? Math.round((longTermCount / totalCount) * 100) : 0;
   const masteredPercentage = totalCount > 0 ? Math.round((masteredCount / totalCount) * 100) : 0;
-
-  console.log("ANALYTICS_QUERY_DEBUG (calculateStabilityMatrix):", {
-    input_cards_total: cards.length,
-    active_studied_cards_count: activeStudiedCards.length,
-    learningCount,
-    reviewCount,
-    masteredCount,
-    sample_active_cards: activeStudiedCards.slice(0, 5).map(c => ({ state: c.state, stability: c.stability, reps: c.repetition_count })),
-  });
 
   return {
     learningCount,
     learningPercentage,
-    reviewCount,
-    reviewPercentage,
+    earlyReviewCount,
+    earlyReviewPercentage,
+    consolidationCount,
+    consolidationPercentage,
+    longTermCount,
+    longTermPercentage,
     masteredCount,
     masteredPercentage,
     totalCount,

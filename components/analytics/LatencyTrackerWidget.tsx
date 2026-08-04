@@ -32,11 +32,11 @@ export function LatencyTrackerWidget({ data, className = '' }: LatencyTrackerWid
           <div className="flex items-center gap-2">
             <Gauge size={16} className="text-amber-400" />
             <span className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
-              Yanıt Süresi & Otomasyon İndeksi (I-Proc)
+              I-PROC Metrics
             </span>
           </div>
           <h3 className="text-lg font-bold text-white tracking-tight mt-0.5">
-            Procedural Latency & Speed Automation
+            Yanıt Hızı & Otomasyon (I-PROC)
           </h3>
         </div>
 
@@ -59,7 +59,7 @@ export function LatencyTrackerWidget({ data, className = '' }: LatencyTrackerWid
         <div className="rounded-xl border border-zinc-800 bg-zinc-950/80 p-3.5">
           <div className="flex items-center justify-between text-zinc-500 mb-1">
             <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Ortalama Yanıt Süresi
+              ORTALAMA YANIT SÜRESİ
             </span>
             <Clock size={14} className="text-amber-400" />
           </div>
@@ -67,14 +67,14 @@ export function LatencyTrackerWidget({ data, className = '' }: LatencyTrackerWid
             {currentSec}s <span className="text-xs font-normal text-zinc-500">({currentAvgLatencyMs} ms)</span>
           </p>
           <p className="text-[10px] text-zinc-500 mt-1">
-            Kart gösteriminden yanıta kadar geçen süre
+            Kart başına geçen süre
           </p>
         </div>
 
         <div className="rounded-xl border border-amber-900/60 bg-amber-950/20 p-3.5">
           <div className="flex items-center justify-between text-amber-400 mb-1">
             <span className="text-xs font-bold uppercase tracking-wider">
-              Otomasyon İndeksi (I-Proc)
+              OTOMASYON DÜZEYİ
             </span>
             <TrendingDown size={14} />
           </div>
@@ -82,7 +82,7 @@ export function LatencyTrackerWidget({ data, className = '' }: LatencyTrackerWid
             {automationIndex} <span className="text-xs font-normal text-amber-400/70">(0.0 – 1.0)</span>
           </p>
           <p className="text-[10px] text-zinc-500 mt-1">
-            800ms eşiğine yaklaştıkça tam otomasyona geçer
+            Kalıcı hafızaya geçiş oranı
           </p>
         </div>
       </div>
@@ -90,7 +90,7 @@ export function LatencyTrackerWidget({ data, className = '' }: LatencyTrackerWid
       {/* Time-series Bar Graph (Last 7 Days) */}
       <div>
         <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-3">
-          Son 7 Günlük Yanıt Süresi Trendi (ms)
+          SON 7 GÜNLÜK YANIT SÜRESİ (MS)
         </p>
         <div className="flex items-end justify-between gap-2 h-24 pt-4 px-2 rounded-xl border border-zinc-800 bg-zinc-950/60">
           {history.map((point) => {

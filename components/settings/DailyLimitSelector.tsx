@@ -202,10 +202,10 @@ export function DailyLimitSelector({ onLimitChanged, className = '' }: DailyLimi
 
           <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/80 p-2.5">
             <div className="flex items-center gap-1.5 text-zinc-500 text-[11px] font-medium mb-0.5">
-              <Clock size={13} className="text-violet-400" />
+              <Clock size={13} className="text-blue-400" />
               <span>Gerekli Zaman</span>
             </div>
-            <p className="text-base font-bold text-violet-300">
+            <p className="text-base font-bold text-blue-300">
               ~{currentSim.dailyMinutesDay30} <span className="text-xs font-normal text-zinc-500">dk/gün</span>
             </p>
           </div>

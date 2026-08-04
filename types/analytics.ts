@@ -8,13 +8,17 @@
  */
 
 export interface StabilityMatrixData {
-  learningCount:       number; // S < 1 day (#F59E0B)
-  learningPercentage:  number;
-  reviewCount:         number; // 1 <= S < 365 days (#3B82F6)
-  reviewPercentage:    number;
-  masteredCount:       number; // S >= 365 days (#10B981)
-  masteredPercentage:  number;
-  totalCount:          number;
+  learningCount:           number; // 1. Öğrenim (S < 1 day)
+  learningPercentage:      number;
+  earlyReviewCount:        number; // 2. Erken Tekrar (1 <= S < 7 days)
+  earlyReviewPercentage:   number;
+  consolidationCount:     number; // 3. Pekiştirme (7 <= S < 30 days)
+  consolidationPercentage: number;
+  longTermCount:          number; // 4. Uzun Vadeli (30 <= S < 365 days)
+  longTermPercentage:     number;
+  masteredCount:          number; // 5. Master (S >= 365 days)
+  masteredPercentage:      number;
+  totalCount:              number;
 }
 
 export interface ReceptiveToProductiveMetric {

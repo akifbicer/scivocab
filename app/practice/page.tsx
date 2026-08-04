@@ -21,6 +21,7 @@ import type { Database, LexicalItemRow, UserLexicalStateRow } from '@/types/data
 import type { SessionCard } from '@/hooks/usePracticeSession';
 import { getSampleSentence } from '@/lib/data/awl-sentences';
 import { getDemirtasSentenceInfo } from '@/lib/data/demirtas-sentences';
+import { getGlobalDueCards } from '@/app/actions/srs';
 import { PracticeClient } from './_components/PracticeClient';
 
 // =============================================================================
@@ -36,7 +37,7 @@ export const metadata: Metadata = {
 // CONSTANTS
 // =============================================================================
 
-/** Maximum new words introduced per day / per module. */
+/** Maximum new cards introduced per day / per module. */
 const DAILY_NEW_CARD_LIMIT = 10;
 
 // =============================================================================
@@ -98,7 +99,15 @@ function toSessionCard(row: UserStateWithItem): SessionCard | null {
     demirtasInfo?.exampleSentence ||
     getSampleSentence(lexicalItem.lemma);
 
-  return { userState, lexicalItem, contextSentence };
+  const moduleId = lexicalItem.module_number ?? 1;
+
+  return {
+    userState,
+    lexicalItem,
+    contextSentence,
+    module_id: moduleId,
+    module_name: `Modül ${moduleId}`,
+  };
 }
 
 // =============================================================================
@@ -108,7 +117,7 @@ function toSessionCard(row: UserStateWithItem): SessionCard | null {
 export default async function PracticePage({
   searchParams,
 }: {
-  searchParams: Promise<{ module?: string }>;
+  searchParams: Promise<{ module?: string; mode?: string }>;
 }) {
   const supabase = await createClient();
   const now = new Date().toISOString();
@@ -123,9 +132,11 @@ export default async function PracticePage({
   // ── 1. Resolve searchParams (Next.js 15 async standard) ─────────────────────
   const params = await searchParams;
   const moduleParam = params?.module;
+  const modeParam = params?.mode;
+  const isGlobalMode = modeParam === 'global' || (!moduleParam && modeParam !== 'module');
   const activeModule = moduleParam ? (parseInt(moduleParam, 10) || 1) : 1;
 
-  console.log('🔍 [DEBUG] moduleParam:', moduleParam);
+  console.log('🔍 [DEBUG] moduleParam:', moduleParam, 'modeParam:', modeParam, 'isGlobalMode:', isGlobalMode);
 
   // ── 2. Next upcoming review timestamp (for empty-state countdown) ─────────
   const { data: nextDueRow } = await supabase
@@ -142,7 +153,11 @@ export default async function PracticePage({
 
   let initialCards: SessionCard[] = [];
 
-  if (moduleParam) {
+  if (isGlobalMode) {
+    // ── Global Review Engine Mode (?mode=global) ──────────────────────────────
+    const { cards: globalCards } = await getGlobalDueCards();
+    initialCards = globalCards;
+  } else if (moduleParam) {
     // ── Module Mode (?module=X) ──────────────────────────────────────────────
     const moduleNumber = parseInt(moduleParam, 10);
     const { data: rawItems, error: moduleError } = await supabase
@@ -151,8 +166,6 @@ export default async function PracticePage({
       .eq('module_number', moduleNumber)
       .order('coca_rank', { ascending: true })
       .limit(DAILY_NEW_CARD_LIMIT);
-
-    console.log('🔍 [DEBUG] Çekilen Kelimeler:', rawItems?.map((i: any) => i.lemma));
 
     if (moduleError) {
       console.error('[PracticePage] module cards fetch error:', moduleError.message);
@@ -173,11 +186,15 @@ export default async function PracticePage({
         demirtasInfo?.exampleSentence ||
         getSampleSentence(row.lemma);
 
+      const modId = row.module_number ?? moduleNumber;
+
       if (userStateRow) {
         return {
           userState: userStateRow as UserLexicalStateRow,
           lexicalItem: row as any,
           contextSentence: sentence,
+          module_id: modId,
+          module_name: `Modül ${modId}`,
         };
       }
       return {
@@ -196,6 +213,8 @@ export default async function PracticePage({
         } as UserLexicalStateRow,
         lexicalItem: row as any,
         contextSentence: sentence,
+        module_id: modId,
+        module_name: `Modül ${modId}`,
       };
     });
 
@@ -205,12 +224,10 @@ export default async function PracticePage({
       const stability = card.userState.stability ?? 0;
       const nextReviewDate = card.userState.next_review_date;
 
-      // 1. Exclude Mastered cards (stability >= 365 or state === 'Mastered')
       if (state === 'Mastered' || stability >= 365) {
         return false;
       }
 
-      // 2. Exclude Review cards that are not yet due (next_review_date > now)
       if (state === 'Review' && nextReviewDate) {
         const reviewTime = new Date(nextReviewDate).getTime();
         if (reviewTime > nowTime) {
@@ -218,74 +235,12 @@ export default async function PracticePage({
         }
       }
 
-      // 3. Keep New, Learning, Re-learning, or Due Review cards
       return true;
     });
   } else {
-    // ── General Practice Mode ─────────────────────────────────────────────────
-    // a) Due review cards
-    const { data: dueRows, error: dueError } = await supabase
-      .from('USER_LEXICAL_STATE')
-      .select('*, LEXICAL_ITEMS(*)')
-      .eq('user_id', userId)
-      .in('state', ['Learning', 'Review', 'Re-learning'])
-      .lte('next_review_date', now)
-      .order('next_review_date', { ascending: true });
-
-    if (dueError) {
-      console.error('[PracticePage] due cards fetch error:', dueError.message);
-    }
-
-    // b) New cards (daily limit)
-    const { data: newRows, error: newError } = await supabase
-      .from('LEXICAL_ITEMS')
-      .select('*, USER_LEXICAL_STATE(*)')
-      .order('coca_rank', { ascending: true })
-      .limit(DAILY_NEW_CARD_LIMIT);
-
-    if (newError) {
-      console.error('[PracticePage] new cards fetch error:', newError.message);
-    }
-
-    const dueCards: SessionCard[] = ((dueRows as UserStateWithItem[] | null) ?? [])
-      .map(toSessionCard)
-      .filter((c): c is SessionCard => c !== null);
-
-    const newCards: SessionCard[] = (newRows ?? []).map((row: any) => {
-      const userStateRows = row.USER_LEXICAL_STATE as any[] | null;
-      if (userStateRows && userStateRows.length > 0 && userStateRows[0].state === 'New') {
-        return {
-          userState: userStateRows[0] as UserLexicalStateRow,
-          lexicalItem: row as any,
-          contextSentence:
-            row.context_sentence ||
-            row.example_sentence ||
-            getSampleSentence(row.lemma),
-        };
-      }
-      return {
-        userState: {
-          id: '00000000-0000-0000-0000-000000000000',
-          user_id: userId,
-          lexical_item_id: row.id,
-          state: 'New',
-          stability: 0,
-          difficulty: 0,
-          last_review_date: null,
-          next_review_date: null,
-          lapses: 0,
-          repetition_count: 0,
-          avg_latency_ms: 0,
-        } as UserLexicalStateRow,
-        lexicalItem: row as any,
-        contextSentence:
-          row.context_sentence ||
-          row.example_sentence ||
-          getSampleSentence(row.lemma),
-      };
-    });
-
-    initialCards = [...dueCards, ...newCards];
+    // Fallback: Global Review cards
+    const { cards: globalCards } = await getGlobalDueCards();
+    initialCards = globalCards;
   }
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -294,6 +249,7 @@ export default async function PracticePage({
       initialCards={initialCards}
       nextDueAt={nextDueAt}
       currentModule={activeModule}
+      isGlobalMode={isGlobalMode}
     />
   );
 }

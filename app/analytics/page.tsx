@@ -161,7 +161,7 @@ export default async function AnalyticsPage() {
             </div>
           </div>
 
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-800 bg-violet-950/80 px-3 py-1 text-xs font-bold text-violet-300">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-800 bg-blue-950/80 px-3 py-1 text-xs font-bold text-blue-300">
             <Sparkles size={13} />
             <span>Gelişmiş Bilişsel Panel</span>
           </span>

@@ -32,6 +32,10 @@ export interface SessionCard {
    * If absent WordCard falls back to `lexicalItem.l2_definition`.
    */
   contextSentence?: string;
+  /** Module ID / number for global review mode badge. */
+  module_id?:       number | null;
+  /** Module display name for global review mode badge. */
+  module_name?:     string | null;
 }
 
 /** Per-review accumulation counters (internal; derive display values from these). */

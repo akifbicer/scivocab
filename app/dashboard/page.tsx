@@ -20,6 +20,7 @@ import { redirect }          from 'next/navigation';
 import { createServerClient } from '@supabase/ssr';
 
 import type { Database }  from '@/types/database';
+import { getGlobalDueCards } from '@/app/actions/srs';
 import { DashboardClient } from './_components/DashboardClient';
 
 // =============================================================================
@@ -33,6 +34,18 @@ export const metadata: Metadata = {
 
 import { calculateAverageRetrievability, type RetrievabilityCalculation } from '@/lib/retrievability';
 import { evaluateStreakSystem, type StreakEvaluationResult } from '@/lib/streak';
+import {
+  calculateStabilityMatrix,
+  calculateReceptiveToProductiveRatio,
+  calculateLatencyAnalytics,
+  type CardStateRow,
+  type ReviewLogRow,
+} from '@/lib/analytics';
+import type {
+  StabilityMatrixData,
+  ReceptiveToProductiveMetric,
+  LatencyAnalyticsData,
+} from '@/types/analytics';
 
 // =============================================================================
 // PUBLIC DATA CONTRACT (shared with DashboardClient)
@@ -47,19 +60,22 @@ export interface StateCounts {
 }
 
 export interface DashboardData {
-  userName:          string;
-  greeting:          string;
-  stateCounts:       StateCounts;
-  totalWords:        number;
-  dueCount:          number;
-  avgStability:      number;   // mean FSRS-6 S across all cards
-  avgDifficulty:     number;   // mean FSRS-6 D across all cards
-  avgLatencyMs:      number;   // weighted mean across all cards
-  totalReviews:      number;   // last 30 days
-  retentionRate:     number;   // 0–100, last 30 days (Good+Easy / total)
-  streak:            number;   // consecutive days with ≥1 review
+  userName:           string;
+  greeting:           string;
+  stateCounts:        StateCounts;
+  totalWords:         number;
+  dueCount:           number;
+  avgStability:       number;   // mean FSRS-6 S across all cards
+  avgDifficulty:      number;   // mean FSRS-6 D across all cards
+  avgLatencyMs:       number;   // weighted mean across all cards
+  totalReviews:       number;   // last 30 days
+  retentionRate:      number;   // 0–100, last 30 days (Good+Easy / total)
+  streak:             number;   // consecutive days with ≥1 review
   retrievabilityCalc: RetrievabilityCalculation;
-  streakEval:        StreakEvaluationResult;
+  streakEval:         StreakEvaluationResult;
+  stabilityMatrix:    StabilityMatrixData;
+  activationMetric:   ReceptiveToProductiveMetric;
+  latencyAnalytics:   LatencyAnalyticsData;
 }
 
 // =============================================================================
@@ -171,6 +187,9 @@ export default async function DashboardPage() {
     'Student'
   );
 
+  // ── 0. Query global due cards for SRS engine ────────────────────────────────
+  const { dueCount: globalDueCount } = await getGlobalDueCards();
+
   // ── 1. USER_LEXICAL_STATE — all aggregates in one query ─────────────────────
   const { data: stateRows, error: stateError } = await supabase
     .from('USER_LEXICAL_STATE')
@@ -190,7 +209,7 @@ export default async function DashboardPage() {
   };
   let totalStability         = 0;
   let totalDifficulty        = 0;
-  let dueCount               = 0;
+  let dueCount               = globalDueCount;
   let totalWeightedLatency   = 0;
   let totalReps              = 0;
 
@@ -200,15 +219,6 @@ export default async function DashboardPage() {
 
     totalStability  += row.stability  ?? 0;
     totalDifficulty += row.difficulty ?? 0;
-
-    // Due: overdue and not yet mastered
-    if (
-      row.next_review_date &&
-      new Date(row.next_review_date) <= now &&
-      state !== 'Mastered'
-    ) {
-      dueCount++;
-    }
 
     // Weighted latency (weight = number of reviews on that card)
     const reps = row.repetition_count ?? 0;
@@ -285,6 +295,23 @@ export default async function DashboardPage() {
     now,
   });
 
+  const cardsForAnalytics: CardStateRow[] = (stateRows ?? []).map((r: any) => ({
+    stability: r.stability,
+    difficulty: r.difficulty,
+    state: r.state,
+    avg_latency_ms: r.avg_latency_ms,
+    repetition_count: r.repetition_count,
+  }));
+
+  const logsForAnalytics: ReviewLogRow[] = (recentLogs ?? []).map((l: any) => ({
+    rating: l.rating,
+    review_timestamp: (l as any).review_timestamp ?? now.toISOString(),
+  }));
+
+  const stabilityMatrix = calculateStabilityMatrix(cardsForAnalytics);
+  const activationMetric = calculateReceptiveToProductiveRatio(cardsForAnalytics, logsForAnalytics.length);
+  const latencyAnalytics = calculateLatencyAnalytics(cardsForAnalytics, logsForAnalytics);
+
   // ── Assemble payload ─────────────────────────────────────────────────────────
   const data: DashboardData = {
     userName,
@@ -300,6 +327,9 @@ export default async function DashboardPage() {
     streak:        streakEval.currentStreakDays,
     retrievabilityCalc,
     streakEval,
+    stabilityMatrix,
+    activationMetric,
+    latencyAnalytics,
   };
 
   return <DashboardClient data={data} />;

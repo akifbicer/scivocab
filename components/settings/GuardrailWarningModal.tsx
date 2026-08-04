@@ -127,10 +127,10 @@ export function GuardrailWarningModal({
 
             <div className="rounded-xl border border-zinc-800 bg-zinc-900/90 p-3">
               <div className="flex items-center gap-1.5 text-zinc-500 mb-1">
-                <Clock size={14} className="text-violet-400" />
+                <Clock size={14} className="text-blue-400" />
                 <span className="text-[11px] font-medium uppercase tracking-wider">Gerekli Günlük Zaman</span>
               </div>
-              <p className="text-xl font-bold text-violet-300 tracking-tight">
+              <p className="text-xl font-bold text-blue-300 tracking-tight">
                 ~{sim.dailyMinutesDay30} <span className="text-xs font-normal text-zinc-500">dakika/gün</span>
               </p>
             </div>

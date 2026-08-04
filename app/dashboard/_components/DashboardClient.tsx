@@ -36,7 +36,9 @@ import type { DashboardData } from '../page';
 import { ModuleSelector } from '@/components/ModuleSelector';
 import { DailyLimitSelector } from '@/components/settings/DailyLimitSelector';
 import { RetrievabilityGauge } from '@/components/dashboard/RetrievabilityGauge';
-import { SessionLauncher } from '@/components/dashboard/SessionLauncher';
+import { StabilityMatrixWidget } from '@/components/analytics/StabilityMatrixWidget';
+import { ReceptiveToProductiveWidget } from '@/components/analytics/ReceptiveToProductiveWidget';
+import { LatencyTrackerWidget } from '@/components/analytics/LatencyTrackerWidget';
 
 // =============================================================================
 // ANIMATION VARIANTS
@@ -62,13 +64,12 @@ const fadeUpVariant = {
 // =============================================================================
 
 interface WelcomeSectionProps {
-  greeting:            string;
-  userName:            string;
-  streak:              number;
-  dueCount:            number;
-  freezeUsedToday?:    boolean;
-  onOpenLimitModal:    () => void;
-  onOpenRoutinesModal: () => void;
+  greeting:              string;
+  userName:              string;
+  streak:                number;
+  dueCount:              number;
+  freezeUsedToday?:      boolean;
+  onOpenAnalyticsModal:  () => void;
 }
 
 function WelcomeSection({
@@ -77,8 +78,7 @@ function WelcomeSection({
   streak,
   dueCount,
   freezeUsedToday,
-  onOpenLimitModal,
-  onOpenRoutinesModal,
+  onOpenAnalyticsModal,
 }: WelcomeSectionProps) {
   const router = useRouter();
 
@@ -102,42 +102,23 @@ function WelcomeSection({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* Lexicon Vocabulary Button */}
+          {/* Lexicon Vocabulary Button (renamed to 'Lexicon') */}
           <Link
             href="/lexicon"
             className="flex items-center gap-1.5 rounded-xl border border-blue-800/60 bg-blue-950/40 px-3.5 py-2 text-xs font-bold text-blue-300 hover:bg-blue-900/50 hover:text-white transition-all shadow-md"
           >
             <BookOpen size={14} className="text-blue-400" />
-            <span>Sözlük & Leksikon</span>
+            <span>Lexicon</span>
           </Link>
 
-          {/* Analytics Panel Link Button */}
-          <Link
-            href="/analytics"
-            className="flex items-center gap-1.5 rounded-xl border border-violet-800/60 bg-violet-950/40 px-3.5 py-2 text-xs font-bold text-violet-300 hover:bg-violet-900/50 hover:text-white transition-all shadow-md"
-          >
-            <Brain size={14} className="text-violet-400" />
-            <span>Gelişmiş Analitik</span>
-          </Link>
-
-          {/* Limit Settings Modal Trigger Button */}
+          {/* Combined Analytics & Limit Settings Button */}
           <button
             type="button"
-            onClick={onOpenLimitModal}
-            className="flex items-center gap-1.5 rounded-xl border border-amber-800/60 bg-amber-950/40 px-3.5 py-2 text-xs font-bold text-amber-300 hover:bg-amber-900/50 hover:text-white transition-all shadow-md cursor-pointer"
+            onClick={onOpenAnalyticsModal}
+            className="flex items-center gap-1.5 rounded-xl border border-blue-800/60 bg-blue-950/40 px-3.5 py-2 text-xs font-bold text-blue-300 hover:bg-blue-900/50 hover:text-white transition-all shadow-md cursor-pointer"
           >
-            <Settings size={14} className="text-amber-400" />
-            <span>⚙️ Bilişsel Limit</span>
-          </button>
-
-          {/* 4-Phase Routine Modal Trigger Button */}
-          <button
-            type="button"
-            onClick={onOpenRoutinesModal}
-            className="flex items-center gap-1.5 rounded-xl border border-emerald-800/60 bg-emerald-950/40 px-3.5 py-2 text-xs font-bold text-emerald-300 hover:bg-emerald-900/50 hover:text-white transition-all shadow-md cursor-pointer"
-          >
-            <Zap size={14} className="text-emerald-400" />
-            <span>🚀 Günlük Rutin</span>
+            <Brain size={14} className="text-blue-400" />
+            <span>Analytics</span>
           </button>
 
           {/* Sign Out Button */}
@@ -345,9 +326,9 @@ function MemoryStateSection({
               </span>
             </div>
             <div className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1">
-              <Gauge size={11} className="text-violet-500" />
+              <Gauge size={11} className="text-sky-500" />
               <span className="text-[11px] font-mono text-zinc-400">
-                D̄ = <span className="text-violet-300">{avgDifficulty.toFixed(1)}</span>
+                D̄ = <span className="text-sky-300">{avgDifficulty.toFixed(1)}</span>
               </span>
             </div>
           </div>
@@ -463,8 +444,8 @@ export interface DashboardClientProps {
 }
 
 export function DashboardClient({ data }: DashboardClientProps) {
-  const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
-  const [isRoutinesModalOpen, setIsRoutinesModalOpen] = useState(false);
+  const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
+  const [analyticsTab, setAnalyticsTab] = useState<'analytics' | 'limit'>('analytics');
 
   return (
     <div className="min-h-screen bg-zinc-950">
@@ -478,25 +459,31 @@ export function DashboardClient({ data }: DashboardClientProps) {
           animate="show"
           className="space-y-0"
         >
-          {/* ── Welcome + Header Navigation ────────────────────────── */}
+          {/* ── 1. EN ÜSTTE: Welcome + Header Navigation ────────────────────────── */}
           <WelcomeSection
             greeting={data.greeting}
             userName={data.userName}
             streak={data.streak}
             dueCount={data.dueCount}
             freezeUsedToday={data.streakEval?.freezeUsedToday}
-            onOpenLimitModal={() => setIsLimitModalOpen(true)}
-            onOpenRoutinesModal={() => setIsRoutinesModalOpen(true)}
+            onOpenAnalyticsModal={() => setIsAnalyticsModalOpen(true)}
           />
 
-          {/* ── 30-day activity strip ───────────────────────────── */}
+          {/* ── 2. HEMEN ALTINDA: Kelime Takip & Zamanı Gelmiş Tekrarlar (Tek Birleşik Panel) ──── */}
+          {data.stabilityMatrix && (
+            <motion.div variants={fadeUpVariant} className="pb-6">
+              <StabilityMatrixWidget data={data.stabilityMatrix} dueCount={data.dueCount} />
+            </motion.div>
+          )}
+
+          {/* ── 3. 30-day activity strip ───────────────────────────── */}
           <ActivityStrip
             totalReviews={data.totalReviews}
             retentionRate={data.retentionRate}
           />
 
-          {/* ── Academic Vocabulary Modules (1-100) — Main Focus ── */}
-          <motion.div variants={fadeUpVariant} className="pt-6">
+          {/* ── 4. EN ALTTA: Academic Vocabulary Modules (1-100) ────────────────── */}
+          <motion.div variants={fadeUpVariant} className="pt-2">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
@@ -512,15 +499,15 @@ export function DashboardClient({ data }: DashboardClientProps) {
         </motion.div>
       </main>
 
-      {/* ── Bilişsel Limit Modal ────────────────────────────────────── */}
+      {/* ── Birleşik Analytics & Bilişsel Limit Modal ────────────────────── */}
       <AnimatePresence>
-        {isLimitModalOpen && (
+        {isAnalyticsModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setIsLimitModalOpen(false)}
+              onClick={() => setIsAnalyticsModalOpen(false)}
               className="absolute inset-0 bg-black/80 backdrop-blur-sm"
             />
 
@@ -528,47 +515,82 @@ export function DashboardClient({ data }: DashboardClientProps) {
               initial={{ opacity: 0, scale: 0.95, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl z-10"
+              className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl z-10"
             >
               <button
-                onClick={() => setIsLimitModalOpen(false)}
+                onClick={() => setIsAnalyticsModalOpen(false)}
                 className="absolute right-4 top-4 rounded-lg border border-zinc-800 bg-zinc-900 p-1.5 text-zinc-400 hover:text-white transition-colors"
               >
                 <X size={16} />
               </button>
 
-              <DailyLimitSelector onLimitChanged={() => setIsLimitModalOpen(false)} />
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+              {/* Modal Header */}
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-blue-800/60 bg-blue-950/60 text-blue-400 shadow-md">
+                  <Brain size={20} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-extrabold text-white tracking-tight">
+                    Analytics & Performans
+                  </h2>
+                  <p className="text-xs text-zinc-400">
+                    Bilişsel gelişim ve kelime otomasyon analizi.
+                  </p>
+                </div>
+              </div>
 
-      {/* ── 4-Fazlı Günlük Rutin Modal ────────────────────────────────── */}
-      <AnimatePresence>
-        {isRoutinesModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsRoutinesModalOpen(false)}
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-            />
+              {/* Tab Switcher */}
+              <div className="flex items-center gap-2 border-b border-zinc-800 pb-3 mb-6">
+                <button
+                  type="button"
+                  onClick={() => setAnalyticsTab('analytics')}
+                  className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
+                    analyticsTab === 'analytics'
+                      ? 'bg-blue-950 text-blue-300 border border-blue-800 shadow-md'
+                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
+                  }`}
+                >
+                  <Brain size={14} />
+                  <span>📊 Bilişsel Analitik</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAnalyticsTab('limit')}
+                  className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
+                    analyticsTab === 'limit'
+                      ? 'bg-amber-950 text-amber-300 border border-amber-800 shadow-md'
+                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
+                  }`}
+                >
+                  <Settings size={14} />
+                  <span>⚙️ Bilişsel Limit Ayarları</span>
+                </button>
+              </div>
 
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 16 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl z-10"
-            >
-              <button
-                onClick={() => setIsRoutinesModalOpen(false)}
-                className="absolute right-4 top-4 rounded-lg border border-zinc-800 bg-zinc-900 p-1.5 text-zinc-400 hover:text-white transition-colors"
-              >
-                <X size={16} />
-              </button>
-
-              <SessionLauncher dueCount={data.dueCount} />
+              {/* Tab Content */}
+              {analyticsTab === 'analytics' ? (
+                <div className="space-y-6">
+                  {data.activationMetric && data.latencyAnalytics && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <ReceptiveToProductiveWidget data={data.activationMetric} />
+                      <LatencyTrackerWidget data={data.latencyAnalytics} />
+                    </div>
+                  )}
+                  <div className="flex justify-end pt-2">
+                    <Link
+                      href="/analytics"
+                      className="flex items-center gap-2 rounded-xl border border-blue-700 bg-blue-900/40 px-4 py-2 text-xs font-bold text-blue-200 hover:bg-blue-800/60 transition-all"
+                    >
+                      <span>Detaylı Analitik Sayfasına Git</span>
+                      <ArrowRight size={14} />
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <DailyLimitSelector onLimitChanged={() => setIsAnalyticsModalOpen(false)} />
+                </div>
+              )}
             </motion.div>
           </div>
         )}

@@ -37,56 +37,62 @@ export interface SessionLauncherProps {
   className?: string;
 }
 
-const PHASE_DETAILS = [
-  {
-    phase: SessionPhase.Phase1_ActiveRecall,
-    title: 'Faz 1: Active Recall (15 Dk)',
-    shortName: 'Active Recall',
-    description: 'Aralıklı tekrar algoritması ile kuyruktaki kelimeleri aktif olarak hatırla.',
-    icon: Brain,
-    href: '/practice',
-    buttonText: 'Faz 1: Active Recall Başlat (15 Dk)',
-    colorTheme: 'border-blue-700/60 bg-blue-600 text-white hover:bg-blue-500',
-  },
-  {
-    phase: SessionPhase.Phase2_ContextualInput,
-    title: 'Faz 2: Contextual Input (25 Dk)',
-    shortName: 'Contextual Input',
-    description: 'Kelimeleri zengin akademik metinler ve bağlamsal cümleler içerisinde incele.',
-    icon: BookOpen,
-    href: '/practice?module=1',
-    buttonText: 'Faz 2: Bağlamsal Okumayı Başlat (25 Dk)',
-    colorTheme: 'border-amber-700/60 bg-amber-600 text-white hover:bg-amber-500',
-  },
-  {
-    phase: SessionPhase.Phase3_PushedOutput,
-    title: 'Faz 3: Pushed Output (15 Dk)',
-    shortName: 'Pushed Output',
-    description: 'AI Geri Bildirim motoru ile kendi özgün akademik cümlelerini üret.',
-    icon: Edit3,
-    href: '/practice',
-    buttonText: 'Faz 3: Cümle Üretimini Başlat (15 Dk)',
-    colorTheme: 'border-violet-700/60 bg-violet-600 text-white hover:bg-violet-500',
-  },
-  {
-    phase: SessionPhase.Phase4_MetacognitiveCoaching,
-    title: 'Faz 4: AI Metacognitive Coaching (5 Dk)',
-    shortName: 'AI Coaching',
-    description: 'Günlük seansını değerlendir, öz-değerlendirme yap ve AI raporunu incele.',
-    icon: Sparkles,
-    href: '/practice',
-    buttonText: 'Faz 4: AI Coaching & Özet Rapor (5 Dk)',
-    colorTheme: 'border-emerald-700/60 bg-emerald-600 text-white hover:bg-emerald-500',
-  },
-];
-
 export function SessionLauncher({ dueCount, className = '' }: SessionLauncherProps) {
   const router = useRouter();
   const [currentPhase, setCurrentPhase] = useState<SessionPhase>(
     dueCount > 0 ? SessionPhase.Phase1_ActiveRecall : SessionPhase.Phase2_ContextualInput,
   );
 
-  const activePhaseDetail = PHASE_DETAILS.find((p) => p.phase === currentPhase) ?? PHASE_DETAILS[0];
+  const phaseDetails = [
+    {
+      phase: SessionPhase.Phase1_ActiveRecall,
+      title: 'Faz 1: Active Recall & Küresel Tekrar (15 Dk)',
+      shortName: 'Active Recall',
+      description: 'Aralıklı tekrar (FSRS-6) algoritması ile tüm modüllerdeki zamanı gelmiş kelimeleri aktif olarak hatırla.',
+      icon: Brain,
+      href: '/practice?mode=global',
+      buttonText: dueCount > 0
+        ? `🚀 Bilişsel Tekrarı Başlat (${dueCount} Kart Zamanı Geldi)`
+        : 'Şu an tekrar etmen gereken kart yok 🎉',
+      colorTheme: 'border-blue-700/60 bg-blue-600 text-white hover:bg-blue-500',
+      disabled: dueCount === 0,
+    },
+    {
+      phase: SessionPhase.Phase2_ContextualInput,
+      title: 'Faz 2: Contextual Input (25 Dk)',
+      shortName: 'Contextual Input',
+      description: 'Kelimeleri zengin akademik metinler ve bağlamsal cümleler içerisinde incele.',
+      icon: BookOpen,
+      href: '/practice?module=1',
+      buttonText: 'Faz 2: Bağlamsal Okumayı Başlat (25 Dk)',
+      colorTheme: 'border-amber-700/60 bg-amber-600 text-white hover:bg-amber-500',
+      disabled: false,
+    },
+    {
+      phase: SessionPhase.Phase3_PushedOutput,
+      title: 'Faz 3: Pushed Output (15 Dk)',
+      shortName: 'Pushed Output',
+      description: 'AI Geri Bildirim motoru ile kendi özgün akademik cümlelerini üret.',
+      icon: Edit3,
+      href: '/practice',
+      buttonText: 'Faz 3: Cümle Üretimini Başlat (15 Dk)',
+      colorTheme: 'border-blue-700/60 bg-blue-600 text-white hover:bg-blue-500',
+      disabled: false,
+    },
+    {
+      phase: SessionPhase.Phase4_MetacognitiveCoaching,
+      title: 'Faz 4: AI Metacognitive Coaching (5 Dk)',
+      shortName: 'AI Coaching',
+      description: 'Günlük seansını değerlendir, öz-değerlendirme yap ve AI raporunu incele.',
+      icon: Sparkles,
+      href: '/practice',
+      buttonText: 'Faz 4: AI Coaching & Özet Rapor (5 Dk)',
+      colorTheme: 'border-emerald-700/60 bg-emerald-600 text-white hover:bg-emerald-500',
+      disabled: false,
+    },
+  ];
+
+  const activePhaseDetail = phaseDetails.find((p) => p.phase === currentPhase) ?? phaseDetails[0];
 
   const completedPhasesCount = currentPhase === SessionPhase.Completed ? 4 : (currentPhase as number) - 1;
   const progressPercent = Math.min(100, Math.round((completedPhasesCount / 4) * 100));
@@ -123,7 +129,7 @@ export function SessionLauncher({ dueCount, className = '' }: SessionLauncherPro
 
       {/* 4 Phase Stepper Indicator */}
       <div className="grid grid-cols-4 gap-2 mb-6">
-        {PHASE_DETAILS.map((p, idx) => {
+        {phaseDetails.map((p, idx) => {
           const isDone = (currentPhase as number) > (p.phase as number);
           const isActive = currentPhase === p.phase;
 

@@ -194,8 +194,8 @@ function CollocationBadge({ collocation }: { collocation: string }) {
       </span>
       <span
         className="
-          inline-flex items-center rounded-lg border border-violet-800/50
-          bg-violet-950/30 px-2.5 py-0.5 text-sm font-semibold text-violet-300
+          inline-flex items-center rounded-lg border border-blue-800/50
+          bg-blue-950/30 px-2.5 py-0.5 text-sm font-semibold text-blue-300
         "
       >
         {collocation}
@@ -340,15 +340,15 @@ export function AIFeedbackSection({ targetLemma, l1Meaning }: AIFeedbackSectionP
   // ============================================================================
 
   return (
-    <div className="mt-5 rounded-xl border border-violet-900/40 bg-zinc-950/80 p-4 shadow-xl">
+    <div className="mt-5 rounded-xl border border-blue-900/40 bg-zinc-950/80 p-4 shadow-xl">
       {/* ── Section Title ────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="rounded-lg bg-violet-950/80 p-1.5 border border-violet-800/60">
-            <Sparkles size={14} className="text-violet-400" />
+          <div className="rounded-lg bg-blue-950/80 p-1.5 border border-blue-800/60">
+            <Sparkles size={14} className="text-blue-400" />
           </div>
           <div>
-            <span className="text-xs font-bold uppercase tracking-widest text-violet-300">
+            <span className="text-xs font-bold uppercase tracking-widest text-blue-300">
               AI ile Cümle Üretimi & Geri Bildirim
             </span>
             <p className="text-[11px] text-zinc-500">
@@ -381,8 +381,8 @@ export function AIFeedbackSection({ targetLemma, l1Meaning }: AIFeedbackSectionP
                 mb-3 w-full resize-none rounded-xl border border-zinc-700
                 bg-zinc-900/90 px-4 py-3 text-sm text-zinc-100
                 placeholder-zinc-500 leading-relaxed font-sans
-                focus:border-violet-500 focus:outline-none
-                focus:ring-2 focus:ring-violet-500/30
+                focus:border-blue-500 focus:outline-none
+                focus:ring-2 focus:ring-blue-500/30
                 disabled:cursor-not-allowed disabled:opacity-50
                 transition-all duration-200 shadow-inner
               "
@@ -410,9 +410,9 @@ export function AIFeedbackSection({ targetLemma, l1Meaning }: AIFeedbackSectionP
                 aria-label="Cümleyi Kontrol Et / AI Geri Bildirim Al"
                 className="
                   flex items-center gap-2 rounded-xl
-                  border border-violet-700/80 bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600
-                  px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-950/50
-                  hover:from-violet-500 hover:to-blue-500 hover:border-violet-500
+                  border border-blue-600 bg-blue-600
+                  px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-blue-950/50
+                  hover:bg-blue-500 hover:border-blue-500
                   disabled:cursor-not-allowed disabled:opacity-40
                   transition-all duration-150 active:scale-95
                 "
@@ -424,7 +424,7 @@ export function AIFeedbackSection({ targetLemma, l1Meaning }: AIFeedbackSectionP
                   </>
                 ) : (
                   <>
-                    <Sparkles size={14} className="text-violet-200" />
+                    <Sparkles size={14} className="text-blue-200" />
                     <span>Cümleyi Kontrol Et / AI Geri Bildirim Al</span>
                   </>
                 )}

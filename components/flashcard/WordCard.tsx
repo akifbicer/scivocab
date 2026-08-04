@@ -73,20 +73,14 @@ function getCefrStyle(level: string | null): string {
     case 'A2': return 'bg-emerald-950 text-emerald-300 border-emerald-700 ring-emerald-900';
     case 'B1': return 'bg-sky-950    text-sky-400     border-sky-800     ring-sky-900';
     case 'B2': return 'bg-blue-950   text-blue-300    border-blue-700    ring-blue-900';
-    case 'C1': return 'bg-violet-950 text-violet-300  border-violet-700  ring-violet-900';
-    case 'C2': return 'bg-purple-950 text-purple-300  border-purple-700  ring-purple-900';
+    case 'C1': return 'bg-sky-950    text-sky-300     border-sky-700     ring-sky-900';
+    case 'C2': return 'bg-blue-950   text-blue-300    border-blue-700    ring-blue-900';
     default:   return 'bg-zinc-900   text-zinc-400    border-zinc-700    ring-zinc-800';
   }
 }
 
-function getRatingStyle(color: string): string {
-  switch (color) {
-    case 'rating-again': return 'border-red-800/60    bg-red-950/40    text-red-400    hover:bg-red-900/50    hover:border-red-700 active:scale-95';
-    case 'rating-hard':  return 'border-orange-800/60 bg-orange-950/40 text-orange-400 hover:bg-orange-900/50 hover:border-orange-700 active:scale-95';
-    case 'rating-good':  return 'border-blue-800/60   bg-blue-950/40   text-blue-400   hover:bg-blue-900/50   hover:border-blue-700 active:scale-95';
-    case 'rating-easy':  return 'border-emerald-800/60 bg-emerald-950/40 text-emerald-400 hover:bg-emerald-900/50 hover:border-emerald-700 active:scale-95';
-    default:             return '';
-  }
+function getRatingStyle(_color: string): string {
+  return 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:border-blue-500 hover:text-blue-400 hover:bg-zinc-800/50 transition-all cursor-pointer active:scale-95';
 }
 
 // =============================================================================
@@ -452,9 +446,9 @@ export function WordCard({
         <header className="flex flex-wrap items-center justify-between gap-2 px-5 pt-5 pb-3">
           <div className="flex flex-wrap items-center gap-2">
             {/* Module Badge */}
-            {lexicalItem.module_number && (
+            {(lexicalItem.module_number ?? (userState as any)?.module_number) && (
               <span className="inline-flex items-center rounded-md border border-amber-800/80 bg-amber-950/60 px-2.5 py-0.5 text-xs font-bold text-amber-300 ring-1 ring-amber-900/50">
-                Modül {lexicalItem.module_number}
+                Modül {lexicalItem.module_number ?? (userState as any)?.module_number}
               </span>
             )}
 
@@ -722,17 +716,17 @@ export function WordCard({
                 {/* ── İlişkili İfadeler (Collocations) ────────────────────────── */}
                 {collocationsList.length > 0 && (
                   <div className="mb-5">
-                    <p className="text-[11px] uppercase tracking-widest text-indigo-400 font-semibold mb-2 flex items-center gap-1.5">
+                    <p className="text-[11px] uppercase tracking-widest text-sky-400 font-semibold mb-2 flex items-center gap-1.5">
                       <span>İlişkili İfadeler</span>
-                      <span className="text-[10px] text-indigo-500 font-normal">(Collocations)</span>
+                      <span className="text-[10px] text-sky-500 font-normal">(Collocations)</span>
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {collocationsList.map((col) => (
                         <span
                           key={col}
                           className="
-                            rounded-lg border border-indigo-800/60 bg-indigo-950/40
-                            px-3 py-1 text-sm text-indigo-200 font-medium shadow-sm
+                            rounded-lg border border-sky-800/60 bg-sky-950/40
+                            px-3 py-1 text-sm text-sky-200 font-medium shadow-sm
                           "
                         >
                           {col}
@@ -796,16 +790,16 @@ export function WordCard({
                               )}
 
                               {antonymsList.length > 0 && (
-                                <div className="rounded-xl border border-rose-900/50 bg-rose-950/30 p-3">
-                                  <p className="text-[11px] uppercase tracking-widest text-rose-400 font-semibold mb-2 flex items-center gap-1.5">
+                                <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3">
+                                  <p className="text-[11px] uppercase tracking-widest text-zinc-400 font-semibold mb-2 flex items-center gap-1.5">
                                     <span>Zıt Anlamlılar</span>
-                                    <span className="text-[10px] text-rose-600 font-normal">(Antonyms)</span>
+                                    <span className="text-[10px] text-zinc-500 font-normal">(Antonyms)</span>
                                   </p>
                                   <div className="flex flex-wrap gap-1.5">
                                     {antonymsList.map((ant) => (
                                       <span
                                         key={ant}
-                                        className="rounded-md border border-rose-800/60 bg-rose-900/40 px-2 py-0.5 text-xs font-medium text-rose-300"
+                                        className="rounded-md border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-xs font-medium text-zinc-300"
                                       >
                                         {ant}
                                       </span>
@@ -827,12 +821,12 @@ export function WordCard({
                                   <span
                                     key={`${role}-${form}`}
                                     className="
-                                      rounded-lg border border-violet-900/60 bg-violet-950/30
-                                      px-2.5 py-1 text-sm text-violet-300
+                                      rounded-lg border border-blue-900/60 bg-blue-950/30
+                                      px-2.5 py-1 text-sm text-blue-300
                                     "
                                   >
                                     {form}
-                                    <span className="ml-1.5 text-xs text-violet-600 font-normal">
+                                    <span className="ml-1.5 text-xs text-blue-500 font-normal">
                                       ({role})
                                     </span>
                                   </span>
