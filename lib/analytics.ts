@@ -40,11 +40,12 @@ export function calculateStabilityMatrix(cards: CardStateRow[]): StabilityMatrix
   let longTermCount = 0;
   let masteredCount = 0;
 
-  // Filter for active studied cards (repetition_count > 0 or state !== 'New')
+  // Filter for active studied cards (repetition_count > 0 or state !== 'New' or stability > 0)
   const activeStudiedCards = cards.filter((c) => {
     const reps = c.repetition_count ?? 0;
+    const s = c.stability ?? 0;
     const isNew = c.state === 'New';
-    return !isNew && (reps > 0 || c.state === 'Learning' || c.state === 'Re-learning' || c.state === 'Review' || c.state === 'Mastered');
+    return !isNew || reps > 0 || s > 0;
   });
 
   for (const c of activeStudiedCards) {

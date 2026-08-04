@@ -164,6 +164,8 @@ async function createClient() {
 // PAGE
 // =============================================================================
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
   const supabase = await createClient();
   const now      = new Date();
@@ -172,7 +174,7 @@ export default async function DashboardPage() {
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   const GUEST_IDS = ['00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000'];
-  const userIdsToQuery = user ? [user.id] : GUEST_IDS;
+  const userIdsToQuery = user ? Array.from(new Set([user.id, ...GUEST_IDS])) : GUEST_IDS;
 
   const currentUser = user ?? {
     id: '00000000-0000-0000-0000-000000000001',

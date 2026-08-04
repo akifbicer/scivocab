@@ -103,7 +103,7 @@ export async function getGlobalDueCards(): Promise<GlobalDueCardsResult> {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const userIdsToQuery = user ? [user.id] : GUEST_IDS;
+  const userIdsToQuery = user ? Array.from(new Set([user.id, ...GUEST_IDS])) : GUEST_IDS;
   const nowIso = new Date().toISOString();
 
   try {
