@@ -34,6 +34,12 @@ import {
   type SessionSummary,
 } from '@/hooks/usePracticeSession';
 import type { SubmitReviewData } from '@/app/actions/review';
+import { ConsolidationTransitionModal } from '@/components/consolidation/ConsolidationTransitionModal';
+import { ClozeConsolidationView } from '@/components/consolidation/ClozeConsolidationView';
+import { TranslationConsolidationView } from '@/components/consolidation/TranslationConsolidationView';
+import { ConsolidationSummaryView } from '@/components/consolidation/ConsolidationSummaryView';
+import { getConsolidationDataAction, saveConsolidationResultsAction } from '@/app/actions/consolidation';
+import type { ModuleConsolidationData } from '@/lib/data/consolidation-data';
 
 // =============================================================================
 // TYPES
@@ -394,9 +400,19 @@ function SessionComplete({ summary, onBack, onRepeat, currentModule = 1, isGloba
 // MAIN CLIENT COMPONENT
 // =============================================================================
 
+type ConsolidationState = 'idle' | 'transition_modal' | 'cloze_stage' | 'translation_stage' | 'summary' | 'skip_to_dashboard';
+
 export function PracticeClient({ initialCards, nextDueAt, currentModule = 1, isGlobalMode }: PracticeClientProps) {
   const router = useRouter();
   const [cardIndex, setCardIndex] = useState(0);
+
+  // Consolidation flow state
+  const [consolidationState, setConsolidationState] = useState<ConsolidationState>('idle');
+  const [consolidationData, setConsolidationData] = useState<ModuleConsolidationData | null>(null);
+  const [clozeScore, setClozeScore] = useState<number>(0);
+  const [translationScore, setTranslationScore] = useState<number>(0);
+  const [failedWords, setFailedWords] = useState<string[]>([]);
+  const [isLoadingConsolidation, setIsLoadingConsolidation] = useState(false);
 
   const {
     queue,
@@ -424,6 +440,46 @@ export function PracticeClient({ initialCards, nextDueAt, currentModule = 1, isG
     setCardIndex((prev) => Math.min(prev, Math.max(0, queue.length - 2)));
   }, [handleCardReviewed, queue.length]);
 
+  // Start consolidation flow
+  const handleStartConsolidation = async () => {
+    setIsLoadingConsolidation(true);
+    try {
+      const res = await getConsolidationDataAction(currentModule);
+      if (res.success && res.data) {
+        setConsolidationData(res.data);
+        setConsolidationState('cloze_stage');
+      } else {
+        router.push('/dashboard');
+      }
+    } catch {
+      router.push('/dashboard');
+    } finally {
+      setIsLoadingConsolidation(false);
+    }
+  };
+
+  const handleStage1Complete = (score: number, failed: string[]) => {
+    setClozeScore(score);
+    setFailedWords((prev) => Array.from(new Set([...prev, ...failed])));
+    setConsolidationState('translation_stage');
+  };
+
+  const handleStage2Complete = async (score: number, failed: string[]) => {
+    setTranslationScore(score);
+    const allFailed = Array.from(new Set([...failedWords, ...failed]));
+
+    try {
+      await saveConsolidationResultsAction({
+        moduleNumber: currentModule,
+        clozeScore,
+        translationScore: score,
+        failedWords: allFailed,
+      });
+    } catch {}
+
+    setConsolidationState('summary');
+  };
+
   // ── Guard: no cards due today ───────────────────────────────────────────────
   if (isIdle) {
     return (
@@ -433,17 +489,70 @@ export function PracticeClient({ initialCards, nextDueAt, currentModule = 1, isG
     );
   }
 
-  // ── Guard: session complete ─────────────────────────────────────────────────
+  // ── Guard: session complete & Consolidation Flow ────────────────────────────
   if (isComplete && summary) {
+    // Stage: Summary View
+    if (consolidationState === 'summary') {
+      return (
+        <div className="min-h-screen bg-zinc-950">
+          <ConsolidationSummaryView
+            moduleNumber={currentModule}
+            clozeScore={clozeScore}
+            translationScore={translationScore}
+            failedWordsCount={failedWords.length}
+            onReturnToDashboard={() => router.push('/dashboard')}
+          />
+        </div>
+      );
+    }
+
+    // Stage 1: Cloze View
+    if (consolidationState === 'cloze_stage' && consolidationData) {
+      return (
+        <div className="min-h-screen bg-zinc-950">
+          <ClozeConsolidationView
+            moduleNumber={currentModule}
+            targetWords={consolidationData.targetWords}
+            questions={consolidationData.clozeQuestions}
+            onCompleteStage1={handleStage1Complete}
+            onSkip={() => router.push('/dashboard')}
+          />
+        </div>
+      );
+    }
+
+    // Stage 2: Translation View
+    if (consolidationState === 'translation_stage' && consolidationData) {
+      return (
+        <div className="min-h-screen bg-zinc-950">
+          <TranslationConsolidationView
+            moduleNumber={currentModule}
+            questions={consolidationData.translationQuestions}
+            onCompleteStage2={handleStage2Complete}
+            onSkip={() => router.push('/dashboard')}
+          />
+        </div>
+      );
+    }
+
+    // Default / Modal State
     return (
       <div className="min-h-screen bg-zinc-950">
         <SessionComplete
           summary={summary}
           onBack={() => router.push('/dashboard')}
-          onRepeat={()  => router.refresh()}   // server re-fetch picks up new due cards
+          onRepeat={()  => router.refresh()}
           currentModule={currentModule}
           isGlobalMode={isGlobalMode}
         />
+
+        {/* Transition Modal Popup */}
+        {consolidationState !== 'skip_to_dashboard' && (
+          <ConsolidationTransitionModal
+            onContinue={handleStartConsolidation}
+            onSkip={() => setConsolidationState('skip_to_dashboard')}
+          />
+        )}
       </div>
     );
   }

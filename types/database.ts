@@ -197,6 +197,30 @@ export type ReviewLogInsert = Omit<ReviewLogRow, 'id' | 'review_timestamp'> & {
 
 // Review logs are intentionally immutable — no Update type exported.
 
+// ── 3.4  EXERCISE_LOGS ───────────────────────────────────────────────────────
+
+export interface ExerciseLogRow {
+  /** UUID primary key. */
+  id: string;
+  /** FK → auth.users.id. */
+  user_id: string;
+  /** Module number (1-100). */
+  module_number: number;
+  /** Cloze exercise score (0-100). */
+  cloze_score: number;
+  /** Translation exercise score (0-100). */
+  translation_score: number;
+  /** Combined total consolidation score (0-100). */
+  total_score: number;
+  /** ISO-8601 timestamp of exercise completion. */
+  completed_at: string;
+}
+
+export type ExerciseLogInsert = Omit<ExerciseLogRow, 'id' | 'completed_at'> & {
+  id?: string;
+  completed_at?: string;
+};
+
 // ---------------------------------------------------------------------------
 // 4. SUPABASE DATABASE INTERFACE
 //    Drop this into your supabase client initialisation:
@@ -242,6 +266,12 @@ export interface Database {
             referencedColumns: ["id"];
           }
         ];
+      };
+      EXERCISE_LOGS: {
+        Row: ExerciseLogRow;
+        Insert: ExerciseLogInsert;
+        Update: Partial<ExerciseLogInsert>;
+        Relationships: [];
       };
     };
     Enums: {
