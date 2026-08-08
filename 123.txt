@@ -1,0 +1,2 @@
+cd C:\Users\akifbc\Desktop\proje
+npm run dev
